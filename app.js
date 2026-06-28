@@ -889,7 +889,8 @@ function createMetricRow(label, amount, norm, percent, unit = "", isWater = fals
   const suffix = unit ? ` ${unit}` : "";
   const factText = `${formatNumber(amount)}${suffix}`;
   const normText = norm ? ` / ${formatNumber(norm)}${suffix}` : "";
-  const levelClass = isLeveled ? ` ${getProgressLevel(percent)}` : "";
+  const levelClass = isLeveled ? ` ${getProgressLevel(percent, norm)}` : "";
+  const visualPercent = getVisualPercent(amount, norm, percent);
   row.className = "metric-row";
   row.innerHTML = `
     <div class="metric-head">
@@ -897,13 +898,25 @@ function createMetricRow(label, amount, norm, percent, unit = "", isWater = fals
       <span>${factText}${normText} · ${percent}%</span>
     </div>
     <div class="progress${isWater ? " water" : ""}${levelClass}">
-      <span style="width: ${Math.min(percent, 100)}%"></span>
+      <span style="width: ${visualPercent}%"></span>
     </div>
   `;
   return row;
 }
 
-function getProgressLevel(percent) {
+function getVisualPercent(amount, norm, percent) {
+  if (norm) {
+    return Math.min(percent, 100);
+  }
+
+  return amount ? 100 : 0;
+}
+
+function getProgressLevel(percent, norm) {
+  if (!norm) {
+    return "progress-unknown";
+  }
+
   if (percent < 35) {
     return "progress-low";
   }

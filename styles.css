@@ -528,6 +528,11 @@ select {
   background: #3aa66a;
 }
 
+.progress.progress-unknown span,
+.progress.water.progress-unknown span {
+  background: var(--water);
+}
+
 @media (max-width: 980px) {
   .settings-grid,
   .theme-grid {
