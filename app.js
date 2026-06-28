@@ -6,6 +6,7 @@ const SYNC_STATUS = {
   offline: "Нет сети",
   error: "Ошибка синхронизации",
   configMissing: "Supabase не настроен",
+  restoring: "Восстановление входа...",
 };
 
 const fixedMeals = [
@@ -245,9 +246,13 @@ async function initializeSupabaseSync() {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      storageKey: "fitness-diary-supabase-auth",
+      storage: getAuthStorage(),
+      flowType: "pkce",
     },
   });
 
+  setSyncStatus(SYNC_STATUS.restoring);
   const { data, error } = await supabaseClient.auth.getSession();
 
   if (error) {
@@ -287,7 +292,7 @@ async function signInWithGoogle() {
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: window.location.href.split("#")[0],
+      redirectTo: getAuthRedirectUrl(),
     },
   });
 
@@ -399,6 +404,22 @@ function renderAuthState() {
 function setSyncStatus(text) {
   syncStatus.textContent = text;
   syncStatus.dataset.status = text;
+}
+
+function getAuthRedirectUrl() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+function getAuthStorage() {
+  try {
+    const testKey = "__fitness_auth_storage_test__";
+    window.localStorage.setItem(testKey, "1");
+    window.localStorage.removeItem(testKey);
+    return window.localStorage;
+  } catch (error) {
+    console.warn("localStorage недоступен, вход не сохранится после закрытия браузера.", error);
+    return undefined;
+  }
 }
 
 function renderSettings() {
