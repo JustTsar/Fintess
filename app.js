@@ -645,7 +645,7 @@ function getEditableItems(items) {
 
 function createMealSection({ section, key, label, items, removable }) {
   const details = document.createElement("details");
-  details.open = true;
+  details.open = false;
   details.className = "meal-card editable-meal";
   details.dataset.mealCard = "";
   details.dataset.section = section;
@@ -842,10 +842,10 @@ function createDayCard(day) {
   Object.keys(macroLabels).forEach((macro) => {
     const amount = totals[macro];
     const norm = state.settings[macro];
-    metricsColumn.appendChild(createMetricRow(macroLabels[macro], amount, norm, getPercent(amount, norm)));
+    metricsColumn.appendChild(createMetricRow(macroLabels[macro], amount, norm, getPercent(amount, norm), "", false, true));
   });
 
-  metricsColumn.appendChild(createMetricRow("Вода", day.water, state.settings.water, waterPercent, "мл", true));
+  metricsColumn.appendChild(createMetricRow("Вода", day.water, state.settings.water, waterPercent, "мл", true, true));
 
   card.append(dateColumn, mealsColumn, metricsColumn);
   return card;
@@ -884,22 +884,35 @@ function createMealSummary(label, items, emptyText = "Не заполнено") 
   return article;
 }
 
-function createMetricRow(label, amount, norm, percent, unit = "", isWater = false) {
+function createMetricRow(label, amount, norm, percent, unit = "", isWater = false, isLeveled = false) {
   const row = document.createElement("div");
   const suffix = unit ? ` ${unit}` : "";
   const factText = `${formatNumber(amount)}${suffix}`;
   const normText = norm ? ` / ${formatNumber(norm)}${suffix}` : "";
+  const levelClass = isLeveled ? ` ${getProgressLevel(percent)}` : "";
   row.className = "metric-row";
   row.innerHTML = `
     <div class="metric-head">
       <span>${label}</span>
       <span>${factText}${normText} · ${percent}%</span>
     </div>
-    <div class="progress${isWater ? " water" : ""}">
+    <div class="progress${isWater ? " water" : ""}${levelClass}">
       <span style="width: ${Math.min(percent, 100)}%"></span>
     </div>
   `;
   return row;
+}
+
+function getProgressLevel(percent) {
+  if (percent < 35) {
+    return "progress-low";
+  }
+
+  if (percent < 75) {
+    return "progress-mid";
+  }
+
+  return "progress-high";
 }
 
 function updateNutritionPreview(totals = getEditorTotals(), settings = state.settings) {

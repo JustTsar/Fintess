@@ -513,6 +513,21 @@ select {
   background: var(--water);
 }
 
+.progress.progress-low span,
+.progress.water.progress-low span {
+  background: #d94b4b;
+}
+
+.progress.progress-mid span,
+.progress.water.progress-mid span {
+  background: #e5b93f;
+}
+
+.progress.progress-high span,
+.progress.water.progress-high span {
+  background: #3aa66a;
+}
+
 @media (max-width: 980px) {
   .settings-grid,
   .theme-grid {
