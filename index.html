@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Дневник питания</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Локальный дневник</p>
+          <h1>Дневник питания</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="secondary-action" type="button" id="login-button">Войти через Google</button>
+          <button class="secondary-action" type="button" id="logout-button" hidden>Выйти</button>
+          <button class="primary-action" type="button" id="add-day-button">+ День</button>
+        </div>
+      </header>
+
+      <section class="sync-panel" aria-label="Синхронизация">
+        <span id="user-label">Без входа</span>
+        <span id="sync-status">Локальное сохранение</span>
+      </section>
+
+      <section class="settings-panel" aria-labelledby="settings-title">
+        <div class="section-heading">
+          <h2 id="settings-title">Суточная норма</h2>
+          <p>Проценты КБЖУ и воды считаются от этих значений.</p>
+        </div>
+        <form id="settings-form" class="settings-grid">
+          <label>
+            Калории
+            <input type="number" min="0" step="1" inputmode="numeric" name="calories" placeholder="2200">
+          </label>
+          <label>
+            Белки, г
+            <input type="number" min="0" step="1" inputmode="numeric" name="protein" placeholder="140">
+          </label>
+          <label>
+            Жиры, г
+            <input type="number" min="0" step="1" inputmode="numeric" name="fat" placeholder="70">
+          </label>
+          <label>
+            Углеводы, г
+            <input type="number" min="0" step="1" inputmode="numeric" name="carbs" placeholder="240">
+          </label>
+          <label>
+            Вода, мл
+            <input type="number" min="0" step="any" inputmode="numeric" name="water" placeholder="2500">
+          </label>
+          <button type="submit">Сохранить нормы</button>
+        </form>
+        <details class="theme-details">
+          <summary>Настройки цветов</summary>
+          <form id="theme-form" class="theme-grid" aria-label="Настройки цветов">
+            <label>
+              Фон
+              <input type="color" name="bg">
+            </label>
+            <label>
+              Карточки
+              <input type="color" name="surface">
+            </label>
+            <label>
+              Поля
+              <input type="color" name="surfaceStrong">
+            </label>
+            <label>
+              Текст
+              <input type="color" name="text">
+            </label>
+            <label>
+              Вторичный текст
+              <input type="color" name="muted">
+            </label>
+            <label>
+              Акцент
+              <input type="color" name="accent">
+            </label>
+            <label>
+              Сильный акцент
+              <input type="color" name="accentStrong">
+            </label>
+            <label>
+              Мягкий акцент
+              <input type="color" name="accentSoft">
+            </label>
+            <label>
+              Линии
+              <input type="color" name="line">
+            </label>
+            <label>
+              Вода
+              <input type="color" name="water">
+            </label>
+            <label>
+              Удаление
+              <input type="color" name="warn">
+            </label>
+            <button type="button" class="secondary-action" id="reset-theme-button">Сбросить цвета</button>
+          </form>
+        </details>
+      </section>
+
+      <section class="editor-panel" id="editor-panel" hidden aria-labelledby="editor-title">
+        <div class="section-heading">
+          <h2 id="editor-title">Новый день</h2>
+          <p id="editor-subtitle">Заполните питание, воду и КБЖУ по приемам пищи.</p>
+        </div>
+
+        <form id="day-form" class="day-form">
+          <input type="hidden" name="id">
+
+          <div class="editor-top-row">
+            <label class="date-field">
+              Дата
+              <input type="date" name="date" required>
+            </label>
+            <div class="day-nav" aria-label="Навигация по дням">
+              <button type="button" class="secondary-action" data-action="navigate-day" data-offset="-1">← Назад</button>
+              <button type="button" class="secondary-action" data-action="navigate-day" data-offset="1">Вперед →</button>
+            </div>
+          </div>
+
+          <div class="meal-layout">
+            <section class="meal-card water-card" aria-label="Вода">
+              <h3>Вода</h3>
+              <label class="water-field">
+                Вода за день, мл
+                <input type="number" min="0" step="any" inputmode="numeric" name="water" placeholder="0">
+              </label>
+            </section>
+            <div>
+              <div class="meal-grid" id="meal-fields"></div>
+              <button class="secondary-action snack-add-button" type="button" id="add-snack-button">+ Перекус</button>
+            </div>
+          </div>
+
+          <div class="nutrition-preview" aria-live="polite">
+            <h3>Предпросмотр нормы</h3>
+            <div class="preview-list" id="nutrition-preview-list"></div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="secondary-action" id="cancel-edit-button">Отмена</button>
+            <button type="submit" class="primary-action">Сохранить день</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="days-panel" aria-labelledby="days-title">
+        <div class="section-heading">
+          <h2 id="days-title">Все дни</h2>
+          <p id="days-summary">Записей пока нет.</p>
+        </div>
+        <div class="days-list" id="days-list"></div>
+      </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
