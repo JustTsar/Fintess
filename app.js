@@ -73,6 +73,7 @@ const userLabel = document.querySelector("#user-label");
 const syncStatus = document.querySelector("#sync-status");
 const nutritionPreviewList = document.querySelector("#nutrition-preview-list");
 const savedProductsList = document.querySelector("#saved-products-list");
+const savedProductsSearch = document.querySelector("#saved-products-search");
 
 applyTheme();
 renderSettings();
@@ -106,6 +107,10 @@ savedProductForm.addEventListener("submit", (event) => {
   renderSavedProducts();
   applySavedProductsToRows();
   updateNutritionPreview();
+});
+
+savedProductsSearch.addEventListener("input", () => {
+  renderSavedProducts();
 });
 
 savedProductsList.addEventListener("click", (event) => {
@@ -586,7 +591,10 @@ function upsertSavedProduct(product) {
 function renderSavedProducts() {
   savedProductsList.innerHTML = "";
 
-  const sortedProducts = [...state.savedProducts].sort((a, b) => a.product.localeCompare(b.product, "ru"));
+  const searchQuery = getProductKey(savedProductsSearch.value);
+  const sortedProducts = [...state.savedProducts]
+    .filter((product) => !searchQuery || getProductKey(product.product).includes(searchQuery))
+    .sort((a, b) => a.product.localeCompare(b.product, "ru"));
 
   sortedProducts.forEach((product) => {
     savedProductsList.appendChild(createSavedProductRow(product));
@@ -595,7 +603,7 @@ function renderSavedProducts() {
   if (!sortedProducts.length) {
     const empty = document.createElement("p");
     empty.className = "saved-products-empty";
-    empty.textContent = "Пока пусто.";
+    empty.textContent = state.savedProducts.length ? "Ничего не найдено." : "Пока пусто.";
     savedProductsList.appendChild(empty);
   }
 }
@@ -915,7 +923,7 @@ function renderProductSuggestions(row) {
 
   suggestions.innerHTML = "";
 
-  if (!query) {
+  if (!query || !hasLetter(input.value)) {
     suggestions.hidden = true;
     return;
   }
@@ -986,6 +994,10 @@ function findSavedProductById(id) {
 
 function getProductKey(productName) {
   return String(productName || "").trim().toLocaleLowerCase("ru-RU");
+}
+
+function hasLetter(value) {
+  return /[a-zа-яё]/i.test(value);
 }
 
 function roundMacro(value) {

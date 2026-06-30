@@ -14,7 +14,7 @@
           <h1>Дневник питания</h1>
         </div>
         <div class="topbar-actions">
-          <span class="app-version" aria-label="Версия приложения">v1.0.8</span>
+          <span class="app-version" aria-label="Версия приложения">v1.0.9</span>
           <button class="secondary-action" type="button" id="login-button">Войти через Google</button>
           <button class="secondary-action" type="button" id="logout-button" hidden>Выйти</button>
           <button class="primary-action" type="button" id="add-day-button">+ День</button>
@@ -90,6 +90,10 @@
                 </form>
                 <details class="saved-products-details">
                   <summary>Сохраненные продукты</summary>
+                  <label class="saved-products-search">
+                    Поиск
+                    <input type="search" id="saved-products-search" placeholder="Название продукта">
+                  </label>
                   <div class="saved-products-list" id="saved-products-list"></div>
                 </details>
               </div>
