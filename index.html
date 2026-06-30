@@ -25,12 +25,12 @@
         <span id="sync-status">Локальное сохранение</span>
       </section>
 
-      <div class="setup-layout">
-        <section class="settings-panel" aria-labelledby="settings-title">
-          <div class="section-heading">
-            <h2 id="settings-title">Суточная норма</h2>
-            <p>Проценты КБЖУ и воды считаются от этих значений.</p>
-          </div>
+      <section class="settings-panel" aria-labelledby="settings-title">
+        <div class="section-heading">
+          <h2 id="settings-title">Суточная норма</h2>
+          <p>Проценты КБЖУ и воды считаются от этих значений.</p>
+        </div>
+        <div class="settings-row">
           <form id="settings-form" class="settings-grid">
             <label>
               Калории
@@ -52,8 +52,46 @@
               Вода, мл
               <input type="number" min="0" step="any" inputmode="numeric" name="water" placeholder="2500">
             </label>
-            <button type="submit">Сохранить нормы</button>
           </form>
+          <div class="settings-actions">
+            <button type="submit" form="settings-form">Сохранить нормы</button>
+            <details class="products-details">
+              <summary>Продукты</summary>
+              <div class="products-dropdown">
+                <form id="saved-product-form" class="saved-product-form">
+                  <label>
+                    Продукт
+                    <input type="text" name="product" placeholder="Творог 5%" required>
+                  </label>
+                  <label>
+                    Грамм
+                    <input type="number" min="0" step="any" inputmode="decimal" name="grams" placeholder="100" required>
+                  </label>
+                  <div class="saved-macro-grid">
+                    <label>
+                      Ккал
+                      <input type="number" min="0" step="any" inputmode="decimal" name="calories">
+                    </label>
+                    <label>
+                      Белки
+                      <input type="number" min="0" step="any" inputmode="decimal" name="protein">
+                    </label>
+                    <label>
+                      Жиры
+                      <input type="number" min="0" step="any" inputmode="decimal" name="fat">
+                    </label>
+                    <label>
+                      Углеводы
+                      <input type="number" min="0" step="any" inputmode="decimal" name="carbs">
+                    </label>
+                  </div>
+                  <button type="submit" class="secondary-action">Сохранить продукт</button>
+                </form>
+                <div class="saved-products-list" id="saved-products-list"></div>
+              </div>
+            </details>
+          </div>
+        </div>
           <details class="theme-details">
             <summary>Настройки цветов</summary>
             <form id="theme-form" class="theme-grid" aria-label="Настройки цветов">
@@ -104,44 +142,7 @@
               <button type="button" class="secondary-action" id="reset-theme-button">Сбросить цвета</button>
             </form>
           </details>
-        </section>
-
-        <section class="saved-products-panel" aria-labelledby="saved-products-title">
-          <div class="section-heading">
-            <h2 id="saved-products-title">Сохраненные продукты</h2>
-          </div>
-          <form id="saved-product-form" class="saved-product-form">
-            <label>
-              Продукт
-              <input type="text" name="product" placeholder="Творог 5%" required>
-            </label>
-            <label>
-              Грамм
-              <input type="number" min="0" step="any" inputmode="decimal" name="grams" placeholder="100" required>
-            </label>
-            <div class="saved-macro-grid">
-              <label>
-                Ккал
-                <input type="number" min="0" step="any" inputmode="decimal" name="calories">
-              </label>
-              <label>
-                Белки
-                <input type="number" min="0" step="any" inputmode="decimal" name="protein">
-              </label>
-              <label>
-                Жиры
-                <input type="number" min="0" step="any" inputmode="decimal" name="fat">
-              </label>
-              <label>
-                Углеводы
-                <input type="number" min="0" step="any" inputmode="decimal" name="carbs">
-              </label>
-            </div>
-            <button type="submit" class="secondary-action">Сохранить продукт</button>
-          </form>
-          <div class="saved-products-list" id="saved-products-list"></div>
-        </section>
-      </div>
+      </section>
 
       <section class="editor-panel" id="editor-panel" hidden aria-labelledby="editor-title">
         <div class="section-heading">
