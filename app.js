@@ -43,6 +43,7 @@ const defaultState = {
     water: "#3975a8",
     warn: "#b35b32",
   },
+  savedProducts: [],
   days: [],
 };
 
@@ -53,6 +54,7 @@ let syncTimer = null;
 let isApplyingRemoteState = false;
 
 const settingsForm = document.querySelector("#settings-form");
+const savedProductForm = document.querySelector("#saved-product-form");
 const themeForm = document.querySelector("#theme-form");
 const dayForm = document.querySelector("#day-form");
 const editorPanel = document.querySelector("#editor-panel");
@@ -70,9 +72,14 @@ const logoutButton = document.querySelector("#logout-button");
 const userLabel = document.querySelector("#user-label");
 const syncStatus = document.querySelector("#sync-status");
 const nutritionPreviewList = document.querySelector("#nutrition-preview-list");
+const savedProductsList = document.querySelector("#saved-products-list");
+const savedProductsOptions = document.createElement("datalist");
+savedProductsOptions.id = "saved-products-options";
+document.body.appendChild(savedProductsOptions);
 
 applyTheme();
 renderSettings();
+renderSavedProducts();
 renderThemeSettings();
 updateNutritionPreview();
 renderDays();
@@ -92,6 +99,30 @@ settingsForm.addEventListener("submit", (event) => {
   saveState();
   updateNutritionPreview();
   renderDays();
+});
+
+savedProductForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  upsertSavedProduct(readSavedProductForm());
+  savedProductForm.reset();
+  saveState();
+  renderSavedProducts();
+  applySavedProductsToRows();
+  updateNutritionPreview();
+});
+
+savedProductsList.addEventListener("click", (event) => {
+  const removeButton = event.target.closest("[data-action='remove-saved-product']");
+
+  if (!removeButton) {
+    return;
+  }
+
+  state.savedProducts = state.savedProducts.filter((product) => product.id !== removeButton.dataset.id);
+  saveState();
+  renderSavedProducts();
+  applySavedProductsToRows();
+  updateNutritionPreview();
 });
 
 settingsForm.addEventListener("input", () => {
@@ -132,7 +163,14 @@ addSnackButton.addEventListener("click", () => {
   updateNutritionPreview();
 });
 
-dayForm.addEventListener("input", () => {
+dayForm.addEventListener("input", (event) => {
+  const row = event.target.closest(".product-row");
+  const field = event.target.dataset.field;
+
+  if (row && ["product", "grams", "unit"].includes(field)) {
+    applySavedProductToRow(row);
+  }
+
   updateNutritionPreview();
 });
 
@@ -172,6 +210,7 @@ dayForm.addEventListener("click", (event) => {
 
 dayForm.addEventListener("submit", (event) => {
   event.preventDefault();
+  applySavedProductsToRows();
   const day = readDayForm();
   upsertDay(day);
   saveState();
@@ -348,6 +387,7 @@ function applyRemoteState(remoteState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   applyTheme();
   renderSettings();
+  renderSavedProducts();
   renderThemeSettings();
   updateNutritionPreview();
   renderDays();
@@ -388,6 +428,7 @@ function normalizeState(value) {
   return {
     settings: { ...defaultState.settings, ...(value.settings || {}) },
     theme: { ...defaultState.theme, ...(value.theme || {}) },
+    savedProducts: Array.isArray(value.savedProducts) ? value.savedProducts.map(normalizeSavedProduct).filter(hasSavedProductContent) : [],
     days: Array.isArray(value.days) ? value.days.map(normalizeDay) : [],
   };
 }
@@ -481,6 +522,83 @@ function readSettingsForm() {
     carbs: readNumber(settingsForm.elements.carbs.value),
     water: readNumber(settingsForm.elements.water.value),
   };
+}
+
+function readSavedProductForm() {
+  return normalizeSavedProduct({
+    product: savedProductForm.elements.product.value,
+    grams: savedProductForm.elements.grams.value,
+    calories: savedProductForm.elements.calories.value,
+    protein: savedProductForm.elements.protein.value,
+    fat: savedProductForm.elements.fat.value,
+    carbs: savedProductForm.elements.carbs.value,
+  });
+}
+
+function normalizeSavedProduct(product = {}) {
+  return {
+    id: product.id || createId(),
+    product: String(product.product || "").trim(),
+    grams: readNumber(product.grams),
+    calories: readNumber(product.calories),
+    protein: readNumber(product.protein),
+    fat: readNumber(product.fat),
+    carbs: readNumber(product.carbs),
+  };
+}
+
+function hasSavedProductContent(product) {
+  return Boolean(product.product && product.grams);
+}
+
+function upsertSavedProduct(product) {
+  if (!hasSavedProductContent(product)) {
+    return;
+  }
+
+  const key = getProductKey(product.product);
+  const existingIndex = state.savedProducts.findIndex((item) => getProductKey(item.product) === key);
+
+  if (existingIndex >= 0) {
+    state.savedProducts[existingIndex] = { ...product, id: state.savedProducts[existingIndex].id };
+    return;
+  }
+
+  state.savedProducts.push(product);
+}
+
+function renderSavedProducts() {
+  savedProductsList.innerHTML = "";
+  savedProductsOptions.innerHTML = "";
+
+  const sortedProducts = [...state.savedProducts].sort((a, b) => a.product.localeCompare(b.product, "ru"));
+
+  sortedProducts.forEach((product) => {
+    const option = document.createElement("option");
+    option.value = product.product;
+    savedProductsOptions.appendChild(option);
+    savedProductsList.appendChild(createSavedProductRow(product));
+  });
+
+  if (!sortedProducts.length) {
+    const empty = document.createElement("p");
+    empty.className = "saved-products-empty";
+    empty.textContent = "Пока пусто.";
+    savedProductsList.appendChild(empty);
+  }
+}
+
+function createSavedProductRow(product) {
+  const row = document.createElement("article");
+  row.className = "saved-product-row";
+  row.innerHTML = `
+    <div>
+      <strong>${escapeHtml(product.product)}</strong>
+      <span>${formatNumber(product.grams)} г · ${formatNumber(product.calories)} ккал · Б ${formatNumber(product.protein)} · Ж ${formatNumber(product.fat)} · У ${formatNumber(product.carbs)}</span>
+    </div>
+    <button type="button" class="icon-action" data-action="remove-saved-product" data-id="${product.id}" aria-label="Удалить сохраненный продукт">×</button>
+  `;
+  return row;
 }
 
 function createEmptyDay() {
@@ -690,7 +808,7 @@ function createProductRow(item) {
   row.innerHTML = `
     <label class="product-name">
       Продукт
-      <input type="text" data-field="product" placeholder="Творог, банан, курица" value="${escapeAttribute(item.product)}">
+      <input type="text" data-field="product" list="saved-products-options" placeholder="Творог, банан, курица" value="${escapeAttribute(item.product)}">
     </label>
     <label>
       Кол-во
@@ -771,6 +889,46 @@ function readItems(section) {
       carbs: row.querySelector('[data-field="carbs"]').value,
     }))
     .filter(hasItemContent);
+}
+
+function applySavedProductsToRows() {
+  mealFields.querySelectorAll(".product-row").forEach(applySavedProductToRow);
+}
+
+function applySavedProductToRow(row) {
+  const productInput = row.querySelector('[data-field="product"]');
+  const gramsInput = row.querySelector('[data-field="grams"]');
+  const savedProduct = findSavedProduct(productInput.value);
+
+  if (!savedProduct) {
+    return;
+  }
+
+  const grams = readNumber(gramsInput.value);
+  const ratio = savedProduct.grams ? grams / savedProduct.grams : 0;
+
+  ["calories", "protein", "fat", "carbs"].forEach((field) => {
+    const input = row.querySelector(`[data-field="${field}"]`);
+    input.value = ratio ? roundMacro(savedProduct[field] * ratio) : "";
+  });
+}
+
+function findSavedProduct(productName) {
+  const key = getProductKey(productName);
+
+  if (!key) {
+    return null;
+  }
+
+  return state.savedProducts.find((product) => getProductKey(product.product) === key) || null;
+}
+
+function getProductKey(productName) {
+  return String(productName || "").trim().toLocaleLowerCase("ru-RU");
+}
+
+function roundMacro(value) {
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
 }
 
 function renderDays() {
