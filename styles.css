@@ -75,6 +75,20 @@ select:focus-visible {
   flex-wrap: wrap;
 }
 
+.app-version {
+  display: inline-grid;
+  place-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .sync-panel {
   display: flex;
   align-items: center;
