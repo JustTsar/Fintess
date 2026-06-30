@@ -73,9 +73,6 @@ const userLabel = document.querySelector("#user-label");
 const syncStatus = document.querySelector("#sync-status");
 const nutritionPreviewList = document.querySelector("#nutrition-preview-list");
 const savedProductsList = document.querySelector("#saved-products-list");
-const savedProductsOptions = document.createElement("datalist");
-savedProductsOptions.id = "saved-products-options";
-document.body.appendChild(savedProductsOptions);
 
 applyTheme();
 renderSettings();
@@ -167,6 +164,10 @@ dayForm.addEventListener("input", (event) => {
   const row = event.target.closest(".product-row");
   const field = event.target.dataset.field;
 
+  if (row && field === "product") {
+    renderProductSuggestions(row);
+  }
+
   if (row && ["product", "grams", "unit"].includes(field)) {
     applySavedProductToRow(row);
   }
@@ -177,8 +178,23 @@ dayForm.addEventListener("input", (event) => {
 dayForm.addEventListener("click", (event) => {
   const addProduct = event.target.closest("[data-action='add-product']");
   const removeProduct = event.target.closest("[data-action='remove-product']");
+  const useSuggestion = event.target.closest("[data-action='use-product-suggestion']");
   const removeSnack = event.target.closest("[data-action='remove-snack']");
   const navigateDay = event.target.closest("[data-action='navigate-day']");
+
+  if (useSuggestion) {
+    const row = useSuggestion.closest(".product-row");
+    const product = findSavedProductById(useSuggestion.dataset.id);
+
+    if (row && product) {
+      row.querySelector('[data-field="product"]').value = product.product;
+      clearProductSuggestions(row);
+      applySavedProductToRow(row);
+      updateNutritionPreview();
+    }
+
+    return;
+  }
 
   if (addProduct) {
     const section = addProduct.closest("[data-meal-card]");
@@ -569,14 +585,10 @@ function upsertSavedProduct(product) {
 
 function renderSavedProducts() {
   savedProductsList.innerHTML = "";
-  savedProductsOptions.innerHTML = "";
 
   const sortedProducts = [...state.savedProducts].sort((a, b) => a.product.localeCompare(b.product, "ru"));
 
   sortedProducts.forEach((product) => {
-    const option = document.createElement("option");
-    option.value = product.product;
-    savedProductsOptions.appendChild(option);
     savedProductsList.appendChild(createSavedProductRow(product));
   });
 
@@ -808,7 +820,8 @@ function createProductRow(item) {
   row.innerHTML = `
     <label class="product-name">
       Продукт
-      <input type="text" data-field="product" list="saved-products-options" placeholder="Творог, банан, курица" value="${escapeAttribute(item.product)}">
+      <input type="text" data-field="product" autocomplete="off" placeholder="Творог, банан, курица" value="${escapeAttribute(item.product)}">
+      <div class="product-suggestions" data-product-suggestions hidden></div>
     </label>
     <label>
       Кол-во
@@ -895,6 +908,50 @@ function applySavedProductsToRows() {
   mealFields.querySelectorAll(".product-row").forEach(applySavedProductToRow);
 }
 
+function renderProductSuggestions(row) {
+  const input = row.querySelector('[data-field="product"]');
+  const suggestions = row.querySelector("[data-product-suggestions]");
+  const query = getProductKey(input.value);
+
+  suggestions.innerHTML = "";
+
+  if (!query) {
+    suggestions.hidden = true;
+    return;
+  }
+
+  const matches = state.savedProducts
+    .filter((product) => getProductKey(product.product).includes(query))
+    .slice(0, 6);
+
+  if (!matches.length) {
+    suggestions.hidden = true;
+    return;
+  }
+
+  matches.forEach((product) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.action = "use-product-suggestion";
+    button.dataset.id = product.id;
+    button.textContent = product.product;
+    suggestions.appendChild(button);
+  });
+
+  suggestions.hidden = false;
+}
+
+function clearProductSuggestions(row) {
+  const suggestions = row.querySelector("[data-product-suggestions]");
+
+  if (!suggestions) {
+    return;
+  }
+
+  suggestions.innerHTML = "";
+  suggestions.hidden = true;
+}
+
 function applySavedProductToRow(row) {
   const productInput = row.querySelector('[data-field="product"]');
   const gramsInput = row.querySelector('[data-field="grams"]');
@@ -921,6 +978,10 @@ function findSavedProduct(productName) {
   }
 
   return state.savedProducts.find((product) => getProductKey(product.product) === key) || null;
+}
+
+function findSavedProductById(id) {
+  return state.savedProducts.find((product) => product.id === id) || null;
 }
 
 function getProductKey(productName) {
